@@ -287,6 +287,56 @@ button.danger {
   color: #9f1239;
   border-radius: 8px;
   padding: 10px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.error-banner p {
+  margin: 0;
+}
+
+.error-banner button {
+  border-color: #fda4af;
+  background: #fff;
+}
+
+.notice-banner,
+.undo-banner {
+  margin: 0 0 12px;
+  border: 1px solid #bfdbfe;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.undo-banner {
+  border-color: #fde68a;
+  background: #fffbeb;
+  color: #92400e;
+}
+
+.notice-banner p,
+.undo-banner p {
+  margin: 0;
+}
+
+.failure-state {
+  margin-bottom: 12px;
+}
+
+.failure-state h3 {
+  margin: 0 0 6px;
+}
+
+.failure-state p {
+  margin: 0 0 10px;
 }
 
 .empty {

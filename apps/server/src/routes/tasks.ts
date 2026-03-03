@@ -104,6 +104,51 @@ tasksRouter.patch("/bulk", async (req, res) => {
   }
 });
 
+tasksRouter.get("/export", async (_req, res) => {
+  try {
+    const tasks = await prisma.task.findMany({
+      orderBy: [{ createdAt: "desc" }]
+    });
+    res.json({
+      data: {
+        exportedAt: new Date().toISOString(),
+        total: tasks.length,
+        tasks
+      }
+    });
+  } catch (error) {
+    handleRouteError(error, res);
+  }
+});
+
+tasksRouter.post("/:id/restore", async (req, res) => {
+  try {
+    const existingTask = await prisma.task.findUnique({
+      where: { id: req.params.id }
+    });
+
+    if (!existingTask) {
+      res.status(404).json({
+        error: {
+          code: "TASK_NOT_FOUND",
+          message: "タスクが見つかりません"
+        }
+      });
+      return;
+    }
+
+    const task = await prisma.task.update({
+      where: { id: req.params.id },
+      data: {
+        archivedAt: null
+      }
+    });
+    res.json({ data: task });
+  } catch (error) {
+    handleRouteError(error, res);
+  }
+});
+
 tasksRouter.get("/:id", async (req, res) => {
   const task = await prisma.task.findUnique({
     where: { id: req.params.id }
@@ -194,14 +239,18 @@ tasksRouter.delete("/:id", async (req, res) => {
     return;
   }
 
-  await prisma.task.delete({
-    where: { id: req.params.id }
+  const archivedTask = await prisma.task.update({
+    where: { id: req.params.id },
+    data: {
+      archivedAt: new Date()
+    }
   });
 
   res.json({
     data: {
       id: req.params.id,
-      deleted: true
+      deleted: true,
+      task: archivedTask
     }
   });
 });

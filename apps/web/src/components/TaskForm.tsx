@@ -38,11 +38,13 @@ export function TaskForm({ onSubmit, busy = false }: TaskFormProps) {
         <label>
           タイトル
           <input
+            id="task-title-input"
             value={title}
             onChange={(event) => setTitle(event.target.value)}
             placeholder="例: クライアント提案書の初稿"
             required
             maxLength={120}
+            aria-label="タスクタイトル"
           />
         </label>
         <label>
@@ -50,6 +52,7 @@ export function TaskForm({ onSubmit, busy = false }: TaskFormProps) {
           <select
             value={priority}
             onChange={(event) => setPriority(event.target.value as "low" | "medium" | "high")}
+            aria-label="優先度"
           >
             <option value="high">高</option>
             <option value="medium">中</option>
@@ -58,7 +61,12 @@ export function TaskForm({ onSubmit, busy = false }: TaskFormProps) {
         </label>
         <label>
           期限
-          <input type="datetime-local" value={dueDate} onChange={(event) => setDueDate(event.target.value)} />
+          <input
+            type="datetime-local"
+            value={dueDate}
+            onChange={(event) => setDueDate(event.target.value)}
+            aria-label="期限"
+          />
         </label>
         <label className="full">
           メモ
@@ -68,6 +76,7 @@ export function TaskForm({ onSubmit, busy = false }: TaskFormProps) {
             placeholder="補足メモ（任意）"
             maxLength={500}
             rows={3}
+            aria-label="タスクメモ"
           />
         </label>
       </div>

@@ -126,4 +126,33 @@ describe("Tasks API", () => {
     const withArchived = await request(app).get("/tasks").query({ includeArchived: "true" });
     expect(withArchived.body.data).toHaveLength(2);
   });
+
+  it("削除はアーカイブ化され、復元できる", async () => {
+    const created = await request(app).post("/tasks").send({ title: "復元テスト" });
+    const taskId = created.body.data.id as string;
+
+    const deleteResponse = await request(app).delete(`/tasks/${taskId}`);
+    expect(deleteResponse.status).toBe(200);
+    expect(deleteResponse.body.data.task.archivedAt).not.toBeNull();
+
+    const hiddenList = await request(app).get("/tasks");
+    expect(hiddenList.body.data).toHaveLength(0);
+
+    const restoreResponse = await request(app).post(`/tasks/${taskId}/restore`);
+    expect(restoreResponse.status).toBe(200);
+    expect(restoreResponse.body.data.archivedAt).toBeNull();
+
+    const visibleList = await request(app).get("/tasks");
+    expect(visibleList.body.data).toHaveLength(1);
+  });
+
+  it("エクスポートAPIでJSONデータを取得できる", async () => {
+    await request(app).post("/tasks").send({ title: "export target" });
+
+    const response = await request(app).get("/tasks/export");
+    expect(response.status).toBe(200);
+    expect(response.body.data.total).toBe(1);
+    expect(Array.isArray(response.body.data.tasks)).toBe(true);
+    expect(response.body.data.tasks[0].title).toBe("export target");
+  });
 });

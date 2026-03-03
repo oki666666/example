@@ -13,6 +13,16 @@ interface ApiErrorShape {
   };
 }
 
+export class ApiClientError extends Error {
+  constructor(
+    message: string,
+    readonly code?: string,
+    readonly status?: number
+  ) {
+    super(message);
+  }
+}
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     headers: {
@@ -24,15 +34,17 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 
   if (!response.ok) {
     let message = "リクエストに失敗しました";
+    let code: string | undefined;
     try {
       const payload = (await response.json()) as ApiErrorShape;
       if (payload.error?.message) {
         message = payload.error.message;
       }
+      code = payload.error?.code;
     } catch {
       // noop
     }
-    throw new Error(message);
+    throw new ApiClientError(message, code, response.status);
   }
 
   const payload = (await response.json()) as ApiSuccess<T>;
@@ -71,7 +83,7 @@ export const tasksApi = {
     });
   },
   remove(id: string) {
-    return request<{ id: string; deleted: boolean }>(`/tasks/${id}`, {
+    return request<{ id: string; deleted: boolean; task: Task }>(`/tasks/${id}`, {
       method: "DELETE"
     });
   },
@@ -80,5 +92,13 @@ export const tasksApi = {
       method: "PATCH",
       body: JSON.stringify(input)
     });
+  },
+  restore(id: string) {
+    return request<Task>(`/tasks/${id}/restore`, {
+      method: "POST"
+    });
+  },
+  exportJson() {
+    return request<{ exportedAt: string; total: number; tasks: Task[] }>("/tasks/export");
   }
 };
