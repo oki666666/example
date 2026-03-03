@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.DS_Store
+*.log
+coverage/
+apps/server/prisma/dev.db
+apps/server/prisma/dev.db-journal
