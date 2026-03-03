@@ -1,4 +1,4 @@
-import type { Task, TaskCreateInput, TaskFilter, TaskUpdateInput } from "../types/task";
+import type { Task, TaskCreateInput, TaskFilter, TaskSort, TaskUpdateInput } from "../types/task";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8787";
 
@@ -40,10 +40,20 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 }
 
 export const tasksApi = {
-  list(filter: TaskFilter = "all") {
+  list(options?: { filter?: TaskFilter; query?: string; sort?: TaskSort; includeArchived?: boolean }) {
     const params = new URLSearchParams();
+    const filter = options?.filter ?? "all";
     if (filter !== "all") {
       params.set("status", filter);
+    }
+    if (options?.query) {
+      params.set("query", options.query);
+    }
+    if (options?.sort) {
+      params.set("sort", options.sort);
+    }
+    if (options?.includeArchived) {
+      params.set("includeArchived", "true");
     }
     const suffix = params.toString() ? `?${params.toString()}` : "";
     return request<Task[]>(`/tasks${suffix}`);
@@ -63,6 +73,12 @@ export const tasksApi = {
   remove(id: string) {
     return request<{ id: string; deleted: boolean }>(`/tasks/${id}`, {
       method: "DELETE"
+    });
+  },
+  bulk(input: { action: "markDone" | "archive"; ids: string[] }) {
+    return request<{ updatedCount: number }>("/tasks/bulk", {
+      method: "PATCH",
+      body: JSON.stringify(input)
     });
   }
 };

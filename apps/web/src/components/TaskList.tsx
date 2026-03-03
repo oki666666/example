@@ -4,12 +4,22 @@ import type { Task, TaskStatus, TaskUpdateInput } from "../types/task";
 interface TaskListProps {
   tasks: Task[];
   loading?: boolean;
+  selectedIds: string[];
+  onToggleSelect: (id: string) => void;
   onDelete: (id: string) => Promise<void>;
   onStatusChange: (id: string, status: TaskStatus) => Promise<void>;
   onUpdate: (id: string, input: TaskUpdateInput) => Promise<void>;
 }
 
-export function TaskList({ tasks, loading = false, onDelete, onStatusChange, onUpdate }: TaskListProps) {
+export function TaskList({
+  tasks,
+  loading = false,
+  selectedIds,
+  onToggleSelect,
+  onDelete,
+  onStatusChange,
+  onUpdate
+}: TaskListProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draftTitle, setDraftTitle] = useState("");
   const [draftDescription, setDraftDescription] = useState("");
@@ -52,8 +62,19 @@ export function TaskList({ tasks, loading = false, onDelete, onStatusChange, onU
         return (
           <article key={task.id} className={`card task-item ${task.status} ${isOverdue ? "overdue" : ""}`}>
             <header>
-              <h3>{task.title}</h3>
-              <span className={`priority ${task.priority}`}>{priorityLabel(task.priority)}</span>
+              <div className="title-row">
+                <input
+                  type="checkbox"
+                  checked={selectedIds.includes(task.id)}
+                  onChange={() => onToggleSelect(task.id)}
+                  aria-label={`${task.title} を選択`}
+                />
+                <h3>{task.title}</h3>
+              </div>
+              <div className="badge-row">
+                {task.archivedAt ? <span className="archived-badge">アーカイブ</span> : null}
+                <span className={`priority ${task.priority}`}>{priorityLabel(task.priority)}</span>
+              </div>
             </header>
             {task.description ? <p className="description">{task.description}</p> : null}
             <div className="meta">

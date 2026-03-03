@@ -26,6 +26,11 @@ model Task {
   status      TaskStatus   @default(todo)
   priority    TaskPriority @default(medium)
   dueDate     DateTime?
+  archivedAt  DateTime?
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
+
+  @@index([status])
+  @@index([dueDate])
+  @@index([archivedAt])
 }

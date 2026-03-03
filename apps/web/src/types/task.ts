@@ -8,6 +8,7 @@ export interface Task {
   status: TaskStatus;
   priority: TaskPriority;
   dueDate: string | null;
+  archivedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -23,3 +24,4 @@ export interface TaskCreateInput {
 export interface TaskUpdateInput extends Partial<TaskCreateInput> {}
 
 export type TaskFilter = "all" | "todo" | "doing" | "done" | "overdue";
+export type TaskSort = "createdAtDesc" | "dueDateAsc" | "priorityDesc";

@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 import { ZodError } from "zod";
 import { prisma } from "../lib/prisma.js";
 import {
+  bulkTaskActionSchema,
   taskCreateSchema,
   taskListFilterSchema,
   taskUpdateSchema
@@ -15,6 +16,7 @@ tasksRouter.get("/", async (req, res) => {
     const filter = taskListFilterSchema.parse(req.query);
     const now = new Date();
     const where: Prisma.TaskWhereInput = {};
+    const includeArchived = filter.includeArchived === "true" || filter.includeArchived === true;
 
     if (filter.status === "todo" || filter.status === "doing" || filter.status === "done") {
       where.status = filter.status;
@@ -23,13 +25,80 @@ tasksRouter.get("/", async (req, res) => {
       where.status = { not: "done" };
       where.dueDate = { lt: now };
     }
+    if (!includeArchived) {
+      where.archivedAt = null;
+    }
+    if (filter.query) {
+      where.OR = [
+        { title: { contains: filter.query } },
+        { description: { contains: filter.query } }
+      ];
+    }
+
+    const orderBy = (() => {
+      if (filter.sort === "dueDateAsc") {
+        return [{ createdAt: "desc" as const }];
+      }
+      if (filter.sort === "priorityDesc") {
+        return [{ createdAt: "desc" as const }];
+      }
+      return [{ createdAt: "desc" as const }];
+    })();
 
     const tasks = await prisma.task.findMany({
       where,
-      orderBy: [{ createdAt: "desc" }]
+      orderBy
     });
+    const finalTasks = [...tasks];
+    if (filter.sort === "priorityDesc") {
+      finalTasks.sort((a, b) => priorityRank[b.priority] - priorityRank[a.priority]);
+    }
+    if (filter.sort === "dueDateAsc") {
+      finalTasks.sort((a, b) => {
+        const aTime = a.dueDate ? new Date(a.dueDate).getTime() : Number.MAX_SAFE_INTEGER;
+        const bTime = b.dueDate ? new Date(b.dueDate).getTime() : Number.MAX_SAFE_INTEGER;
+        return aTime - bTime;
+      });
+    }
 
-    res.json({ data: tasks });
+    res.json({
+      data: finalTasks,
+      meta: {
+        total: finalTasks.length
+      }
+    });
+  } catch (error) {
+    handleRouteError(error, res);
+  }
+});
+
+tasksRouter.patch("/bulk", async (req, res) => {
+  try {
+    const payload = bulkTaskActionSchema.parse(req.body);
+    if (payload.action === "markDone") {
+      const result = await prisma.task.updateMany({
+        where: {
+          id: { in: payload.ids },
+          archivedAt: null
+        },
+        data: {
+          status: "done"
+        }
+      });
+      res.json({ data: { updatedCount: result.count } });
+      return;
+    }
+
+    const result = await prisma.task.updateMany({
+      where: {
+        id: { in: payload.ids },
+        archivedAt: null
+      },
+      data: {
+        archivedAt: new Date()
+      }
+    });
+    res.json({ data: { updatedCount: result.count } });
   } catch (error) {
     handleRouteError(error, res);
   }
@@ -62,7 +131,8 @@ tasksRouter.post("/", async (req, res) => {
         description: payload.description ?? null,
         status: payload.status ?? "todo",
         priority: payload.priority ?? "medium",
-        dueDate: payload.dueDate ? new Date(payload.dueDate) : null
+        dueDate: payload.dueDate ? new Date(payload.dueDate) : null,
+        archivedAt: null
       }
     });
 
@@ -98,7 +168,8 @@ tasksRouter.patch("/:id", async (req, res) => {
         ...(payload.priority !== undefined ? { priority: payload.priority } : {}),
         ...(payload.dueDate !== undefined
           ? { dueDate: payload.dueDate ? new Date(payload.dueDate) : null }
-          : {})
+          : {}),
+        archivedAt: null
       }
     });
 
@@ -154,3 +225,9 @@ function handleRouteError(error: unknown, res: Response) {
     }
   });
 }
+
+const priorityRank = {
+  high: 3,
+  medium: 2,
+  low: 1
+} as const;

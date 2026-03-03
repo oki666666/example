@@ -22,7 +22,7 @@ export function TaskForm({ onSubmit, busy = false }: TaskFormProps) {
       title: title.trim(),
       description: description.trim() || undefined,
       priority,
-      dueDate: dueDate || null
+      dueDate: dueDate ? new Date(dueDate).toISOString() : null
     });
 
     setTitle("");

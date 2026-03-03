@@ -143,6 +143,45 @@ button.danger {
   margin-bottom: 16px;
 }
 
+.control-panel {
+  display: grid;
+  grid-template-columns: 1fr 280px auto;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.control-panel label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.875rem;
+}
+
+.checkbox-inline {
+  flex-direction: row !important;
+  align-items: center;
+  margin-top: auto;
+  gap: 8px !important;
+}
+
+.bulk-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.bulk-actions p {
+  margin: 0;
+  font-weight: 600;
+}
+
+.bulk-actions > div {
+  display: flex;
+  gap: 8px;
+}
+
 .task-list {
   display: grid;
   gap: 12px;
@@ -153,6 +192,18 @@ button.danger {
   justify-content: space-between;
   align-items: center;
   gap: 8px;
+}
+
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.badge-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .task-item h3 {
@@ -220,6 +271,15 @@ button.danger {
   color: #166534;
 }
 
+.archived-badge {
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #334155;
+  background: #e2e8f0;
+}
+
 .error-banner {
   margin: 0 0 12px;
   border: 1px solid #fecaca;
@@ -259,5 +319,14 @@ button.danger {
 
   .form-grid {
     grid-template-columns: 1fr;
+  }
+
+  .control-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .bulk-actions {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
