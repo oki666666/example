@@ -71,7 +71,7 @@ def run():
     logger.info("=== メッセージ終了 ===")
 
     # --- 4. Slack投稿 ---
-    if os.environ.get("SLACK_BOT_TOKEN"):
+    if os.environ.get("SLACK_BOT_TOKEN") or os.environ.get("SLACK_WEBHOOK_URL"):
         logger.info("Slackへ投稿中...")
         success = post_message_in_chunks(message)
         if success:
@@ -80,8 +80,8 @@ def run():
             logger.error("Slack投稿に失敗しました")
             sys.exit(1)
     else:
-        logger.warning("SLACK_BOT_TOKEN が未設定のため、Slack投稿をスキップします")
-        logger.warning("Cursor Dashboard > Secrets に SLACK_BOT_TOKEN を追加してください")
+        logger.warning("SLACK_BOT_TOKEN / SLACK_WEBHOOK_URL が未設定のため、Slack投稿をスキップします")
+        logger.warning("Cursor Dashboard > Secrets に SLACK_BOT_TOKEN または SLACK_WEBHOOK_URL を追加してください")
 
     logger.info("=== AIニュースダイジェスト 完了 ===")
 
