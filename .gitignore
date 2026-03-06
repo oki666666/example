@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+*.pyo
+digest/output.txt
+.env
