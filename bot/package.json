@@ -1,0 +1,14 @@
+{
+  "name": "connpass-popular-events-bot",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Slack notifier for popular upcoming connpass engineering events",
+  "scripts": {
+    "connpass:notify": "node src/main.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
