@@ -34,3 +34,16 @@
 - CSS3
 - JavaScript (ES6+)
 - LocalStorage API
+
+---
+
+## connpass人気イベントお知らせBot
+
+このリポジトリには、Slack通知用のconnpass Bot実装も含まれています。
+
+- 実装ディレクトリ: `bot/`
+- 仕様書: `spec_connpass_bot_mvp.md`
+- 要件定義: `requirements_connpass_bot.md`
+- 実装タスク: `tasklist_connpass_bot.md`
+
+Botの実行手順は `bot/README.md` を参照してください。
