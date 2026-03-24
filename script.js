@@ -2,9 +2,12 @@ class TodoApp {
     constructor() {
         this.todos = this.loadTodos();
         this.currentFilter = 'all';
+        this.voicevox = new VoicevoxClient('http://127.0.0.1:50021');
+        this.speakers = [];
         this.initElements();
         this.attachEvents();
         this.render();
+        this.initVoicevox();
     }
 
     initElements() {
@@ -14,6 +17,11 @@ class TodoApp {
         this.todoCount = document.getElementById('todoCount');
         this.clearCompletedBtn = document.getElementById('clearCompleted');
         this.filterBtns = document.querySelectorAll('.filter-btn');
+        this.voicevoxBaseUrl = document.getElementById('voicevoxBaseUrl');
+        this.speakerSelect = document.getElementById('speakerSelect');
+        this.loadSpeakersBtn = document.getElementById('loadSpeakersBtn');
+        this.speakActiveBtn = document.getElementById('speakActiveBtn');
+        this.voiceStatus = document.getElementById('voiceStatus');
     }
 
     attachEvents() {
@@ -25,6 +33,18 @@ class TodoApp {
         this.filterBtns.forEach(btn => {
             btn.addEventListener('click', (e) => this.setFilter(e.target.dataset.filter));
         });
+        this.voicevoxBaseUrl.addEventListener('change', () => this.updateVoicevoxBaseUrl());
+        this.loadSpeakersBtn.addEventListener('click', () => this.loadSpeakers());
+        this.speakActiveBtn.addEventListener('click', () => this.speakActiveTodos());
+    }
+
+    initVoicevox() {
+        const savedBaseUrl = localStorage.getItem('voicevoxBaseUrl');
+        if (savedBaseUrl) {
+            this.voicevoxBaseUrl.value = savedBaseUrl;
+            this.voicevox.setBaseUrl(savedBaseUrl);
+        }
+        this.loadSpeakers();
     }
 
     loadTodos() {
@@ -34,6 +54,14 @@ class TodoApp {
 
     saveTodos() {
         localStorage.setItem('todos', JSON.stringify(this.todos));
+    }
+
+    updateVoicevoxBaseUrl() {
+        const baseUrl = this.voicevoxBaseUrl.value.trim();
+        if (!baseUrl) return;
+        this.voicevox.setBaseUrl(baseUrl);
+        localStorage.setItem('voicevoxBaseUrl', baseUrl);
+        this.setVoiceStatus(`接続先を更新: ${baseUrl}`);
     }
 
     addTodo() {
@@ -115,6 +143,65 @@ class TodoApp {
 
         const activeCount = this.todos.filter(todo => !todo.completed).length;
         this.todoCount.textContent = `${activeCount} 個のタスク`;
+    }
+
+    setVoiceStatus(message, isError = false) {
+        this.voiceStatus.textContent = message;
+        this.voiceStatus.classList.toggle('error', isError);
+    }
+
+    getSelectedSpeakerId() {
+        return Number(this.speakerSelect.value);
+    }
+
+    async loadSpeakers() {
+        try {
+            this.updateVoicevoxBaseUrl();
+            this.setVoiceStatus('話者一覧を取得中...');
+            this.speakers = await this.voicevox.fetchSpeakers();
+            const styles = this.speakers.flatMap(speaker =>
+                speaker.styles.map(style => ({
+                    id: style.id,
+                    label: `${speaker.name} (${style.name})`
+                }))
+            );
+            if (styles.length === 0) {
+                this.speakerSelect.innerHTML = '<option value="">話者が見つかりません</option>';
+                this.setVoiceStatus('話者が見つかりません', true);
+                return;
+            }
+            this.speakerSelect.innerHTML = styles
+                .map(style => `<option value="${style.id}">${this.escapeHtml(style.label)}</option>`)
+                .join('');
+            this.setVoiceStatus(`話者 ${styles.length} 件を読み込みました`);
+        } catch (error) {
+            this.setVoiceStatus(`接続失敗: ${error.message}`, true);
+        }
+    }
+
+    buildActiveTodosSpeechText() {
+        const activeTodos = this.todos.filter(todo => !todo.completed);
+        if (activeTodos.length === 0) {
+            return '未完了のタスクはありません。';
+        }
+        const lines = activeTodos.map((todo, index) => `${index + 1}番、${todo.text}`);
+        return `未完了タスクを読み上げます。${lines.join('。')}`;
+    }
+
+    async speakActiveTodos() {
+        const speaker = this.getSelectedSpeakerId();
+        if (!Number.isFinite(speaker)) {
+            this.setVoiceStatus('先に話者を選択してください', true);
+            return;
+        }
+        const speechText = this.buildActiveTodosSpeechText();
+        try {
+            this.setVoiceStatus('読み上げ中...');
+            await this.voicevox.speak(speechText, speaker);
+            this.setVoiceStatus('読み上げ完了');
+        } catch (error) {
+            this.setVoiceStatus(`読み上げ失敗: ${error.message}`, true);
+        }
     }
 
     escapeHtml(text) {
