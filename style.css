@@ -122,6 +122,25 @@ h1 {
     align-items: center;
 }
 
+.voice-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 16px;
+    margin-bottom: 12px;
+}
+
+.toggle-option {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: #444;
+}
+
+.toggle-option input {
+    accent-color: #667eea;
+}
+
 .voice-actions button {
     background: #667eea;
     color: #fff;

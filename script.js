@@ -4,7 +4,10 @@ class TodoApp {
         this.currentFilter = 'all';
         this.voicevox = new VoicevoxClient('http://127.0.0.1:50021');
         this.speakers = [];
+        this.isSpeaking = false;
+        this.audioContext = null;
         this.initElements();
+        this.loadVoiceSettings();
         this.attachEvents();
         this.render();
         this.initVoicevox();
@@ -22,6 +25,8 @@ class TodoApp {
         this.loadSpeakersBtn = document.getElementById('loadSpeakersBtn');
         this.speakActiveBtn = document.getElementById('speakActiveBtn');
         this.voiceStatus = document.getElementById('voiceStatus');
+        this.speakOnAdd = document.getElementById('speakOnAdd');
+        this.beepOnComplete = document.getElementById('beepOnComplete');
     }
 
     attachEvents() {
@@ -36,6 +41,24 @@ class TodoApp {
         this.voicevoxBaseUrl.addEventListener('change', () => this.updateVoicevoxBaseUrl());
         this.loadSpeakersBtn.addEventListener('click', () => this.loadSpeakers());
         this.speakActiveBtn.addEventListener('click', () => this.speakActiveTodos());
+        this.speakOnAdd.addEventListener('change', () => this.saveVoiceSettings());
+        this.beepOnComplete.addEventListener('change', () => this.saveVoiceSettings());
+    }
+
+    loadVoiceSettings() {
+        const savedSpeakOnAdd = localStorage.getItem('voicevoxSpeakOnAdd');
+        const savedBeepOnComplete = localStorage.getItem('voicevoxBeepOnComplete');
+        if (this.speakOnAdd) {
+            this.speakOnAdd.checked = savedSpeakOnAdd === 'true';
+        }
+        if (this.beepOnComplete) {
+            this.beepOnComplete.checked = savedBeepOnComplete !== 'false';
+        }
+    }
+
+    saveVoiceSettings() {
+        localStorage.setItem('voicevoxSpeakOnAdd', String(this.speakOnAdd.checked));
+        localStorage.setItem('voicevoxBeepOnComplete', String(this.beepOnComplete.checked));
     }
 
     initVoicevox() {
@@ -79,6 +102,9 @@ class TodoApp {
         this.todoInput.value = '';
         this.saveTodos();
         this.render();
+        if (this.speakOnAdd.checked) {
+            this.speakTodoAdded(todo.text);
+        }
     }
 
     deleteTodo(id) {
@@ -93,6 +119,9 @@ class TodoApp {
             todo.completed = !todo.completed;
             this.saveTodos();
             this.render();
+            if (todo.completed && this.beepOnComplete.checked) {
+                this.playCompleteBeep();
+            }
         }
     }
 
@@ -179,6 +208,56 @@ class TodoApp {
         }
     }
 
+    async speakText(text) {
+        const speaker = this.getSelectedSpeakerId();
+        if (!Number.isFinite(speaker)) {
+            throw new Error('先に話者を選択してください');
+        }
+        if (this.isSpeaking) {
+            return;
+        }
+        this.isSpeaking = true;
+        try {
+            await this.voicevox.speak(text, speaker);
+        } finally {
+            this.isSpeaking = false;
+        }
+    }
+
+    async speakTodoAdded(todoText) {
+        try {
+            this.setVoiceStatus('追加タスクを読み上げ中...');
+            await this.speakText(`タスクを追加しました。${todoText}`);
+            this.setVoiceStatus('読み上げ完了');
+        } catch (error) {
+            this.setVoiceStatus(`自動読み上げ失敗: ${error.message}`, true);
+        }
+    }
+
+    playCompleteBeep() {
+        const audioContext = this.getAudioContext();
+        const now = audioContext.currentTime;
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        oscillator.type = 'triangle';
+        oscillator.frequency.setValueAtTime(880, now);
+        oscillator.frequency.exponentialRampToValueAtTime(660, now + 0.12);
+        gainNode.gain.setValueAtTime(0.0001, now);
+        gainNode.gain.exponentialRampToValueAtTime(0.2, now + 0.01);
+        gainNode.gain.exponentialRampToValueAtTime(0.0001, now + 0.13);
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        oscillator.start(now);
+        oscillator.stop(now + 0.14);
+    }
+
+    getAudioContext() {
+        if (!this.audioContext) {
+            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        return this.audioContext;
+    }
+
     buildActiveTodosSpeechText() {
         const activeTodos = this.todos.filter(todo => !todo.completed);
         if (activeTodos.length === 0) {
@@ -189,15 +268,10 @@ class TodoApp {
     }
 
     async speakActiveTodos() {
-        const speaker = this.getSelectedSpeakerId();
-        if (!Number.isFinite(speaker)) {
-            this.setVoiceStatus('先に話者を選択してください', true);
-            return;
-        }
         const speechText = this.buildActiveTodosSpeechText();
         try {
             this.setVoiceStatus('読み上げ中...');
-            await this.voicevox.speak(speechText, speaker);
+            await this.speakText(speechText);
             this.setVoiceStatus('読み上げ完了');
         } catch (error) {
             this.setVoiceStatus(`読み上げ失敗: ${error.message}`, true);
