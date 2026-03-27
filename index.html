@@ -21,36 +21,6 @@
             <button class="filter-btn" data-filter="completed">完了済み</button>
         </div>
 
-        <section class="voice-section">
-            <h2>🔊 VOICEVOX 読み上げ</h2>
-            <div class="voice-grid">
-                <label class="voice-label">
-                    <span>Engine URL</span>
-                    <input type="text" id="voicevoxBaseUrl" value="http://127.0.0.1:50021" />
-                </label>
-                <label class="voice-label">
-                    <span>話者</span>
-                    <select id="speakerSelect"></select>
-                </label>
-            </div>
-            <div class="voice-options">
-                <label class="toggle-option">
-                    <input type="checkbox" id="speakOnAdd" />
-                    <span>タスク追加時に自動読み上げ</span>
-                </label>
-                <label class="toggle-option">
-                    <input type="checkbox" id="beepOnComplete" checked />
-                    <span>タスク完了時に効果音</span>
-                </label>
-            </div>
-            <div class="voice-actions">
-                <button id="loadSpeakersBtn">話者一覧を更新</button>
-                <button id="speakActiveBtn">未完了タスクを読む</button>
-                <button id="stopSpeakBtn" type="button" class="stop-btn">読み上げを停止</button>
-                <span id="voiceStatus" class="voice-status" aria-live="polite">未接続</span>
-            </div>
-        </section>
-
         <ul id="todoList" class="todo-list"></ul>
 
         <div class="stats">
@@ -59,7 +29,6 @@
         </div>
     </div>
 
-    <script src="voicevox.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
