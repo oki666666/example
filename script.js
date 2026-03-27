@@ -24,6 +24,7 @@ class TodoApp {
         this.speakerSelect = document.getElementById('speakerSelect');
         this.loadSpeakersBtn = document.getElementById('loadSpeakersBtn');
         this.speakActiveBtn = document.getElementById('speakActiveBtn');
+        this.stopSpeakBtn = document.getElementById('stopSpeakBtn');
         this.voiceStatus = document.getElementById('voiceStatus');
         this.speakOnAdd = document.getElementById('speakOnAdd');
         this.beepOnComplete = document.getElementById('beepOnComplete');
@@ -41,6 +42,7 @@ class TodoApp {
         this.voicevoxBaseUrl.addEventListener('change', () => this.updateVoicevoxBaseUrl());
         this.loadSpeakersBtn.addEventListener('click', () => this.loadSpeakers());
         this.speakActiveBtn.addEventListener('click', () => this.speakActiveTodos());
+        this.stopSpeakBtn.addEventListener('click', () => this.stopSpeaking());
         this.speakOnAdd.addEventListener('change', () => this.saveVoiceSettings());
         this.beepOnComplete.addEventListener('change', () => this.saveVoiceSettings());
     }
@@ -224,12 +226,22 @@ class TodoApp {
         }
     }
 
+    stopSpeaking() {
+        this.voicevox.stopSpeaking();
+        this.isSpeaking = false;
+        this.setVoiceStatus('読み上げを停止しました');
+    }
+
     async speakTodoAdded(todoText) {
         try {
             this.setVoiceStatus('追加タスクを読み上げ中...');
             await this.speakText(`タスクを追加しました。${todoText}`);
             this.setVoiceStatus('読み上げ完了');
         } catch (error) {
+            if (error && error.message === '読み上げを停止しました') {
+                this.setVoiceStatus('読み上げを停止しました');
+                return;
+            }
             this.setVoiceStatus(`自動読み上げ失敗: ${error.message}`, true);
         }
     }
@@ -274,6 +286,10 @@ class TodoApp {
             await this.speakText(speechText);
             this.setVoiceStatus('読み上げ完了');
         } catch (error) {
+            if (error && error.message === '読み上げを停止しました') {
+                this.setVoiceStatus('読み上げを停止しました');
+                return;
+            }
             this.setVoiceStatus(`読み上げ失敗: ${error.message}`, true);
         }
     }

@@ -155,6 +155,14 @@ h1 {
     background: #5568d3;
 }
 
+.voice-actions .stop-btn {
+    background: #ef5350;
+}
+
+.voice-actions .stop-btn:hover {
+    background: #d84343;
+}
+
 .voice-status {
     font-size: 13px;
     color: #555;
