@@ -41,3 +41,5 @@
   タスク管理・MTGリマインド・日時振り返りの具体ユースケース集
 - `docs/hermes-workflow-design-ja.md`  
   運用ワークフロー、通知設計、段階導入ステップ
+- `docs/hermes-weekly-prompts-ja.md`  
+  1週間で運用を回すためのコピペ用プロンプト集（朝/会議前後/日次/週次）
